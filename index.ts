@@ -17,7 +17,7 @@ import {
 
 const url: string = Deno.args[0]
 const origin: string = url.match(/https?:\/\/[^/]+\//)[0];
-console.log(url, origin)
+console.table({ url, origin })
 
 
 /*
@@ -52,6 +52,7 @@ pages.set(url, 0)
 /**
  * 再帰チェック
  */
+let counter = 1
 async function checkSite() {
     let check_page = ''
     pages.forEach((value, key) => {
@@ -59,6 +60,7 @@ async function checkSite() {
         if(!checked[key]) check_page = key
     })
     if(check_page) {
+        console.log(counter++, url)
         await checkPage(url, origin)
         setTimeout(checkSite, 1000)
     } else {
