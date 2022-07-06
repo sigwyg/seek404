@@ -15,8 +15,9 @@ import {
  *
  */
 
-const url: string = "https://gaiheki-madoguchi.com/"
+const url: string = Deno.args[0]
 const origin: string = url.match(/https?:\/\/[^/]+\//)[0];
+console.log(url, origin)
 
 
 /*
