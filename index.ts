@@ -17,10 +17,21 @@ function getLinksText(dom, origin_url) {
     dom.querySelectorAll("a").forEach((link) => {
         urls.push(link.getAttribute("href"))
     });
-    return urls
+    const filtered_urls = urls.filter(url => {
+        const regexp = new RegExp(origin_url)
+        if(regexp.test(url)) { return true }
+
+        if(url.match(/^\.?\//)) { // 相対リンクか絶対リンク
+            return true
+        }
+
+        return false
+    })
+    return filtered_urls
 }
 
 const url = "https://gaiheki-madoguchi.com/"
 const html = await getHtmlDom(url)
+const origin_url = url.match(/https?:\/\/[^/]+\//)[0];
 const site_links = getLinksText(html, origin_url)
 console.log(site_links)
