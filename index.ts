@@ -14,13 +14,35 @@ import {
  *
  */
 
-
 const url = "https://gaiheki-madoguchi.com/"
-const origin_url = url.match(/https?:\/\/[^/]+\//)[0];
+const origin = url.match(/https?:\/\/[^/]+\//)[0];
 
-const html = await getHtmlDom(url)
-const links = getLinkAll(html)
+let links_inside = new Map()
+links_inside.set(url, undefined)
 
-const links_inside = filteredLinkAll(links, origin_url)
-const check_map = await check404(links_inside)
-console.log(check_map)
+// 最初のページをチェック
+checkPage(url, origin)
+
+/*
+ * 指定されたURLのリンクをチェックする
+ *
+ * @param {string} url 確認対象のURL
+ * @param {string} origin 対象サイトのorigin
+ *
+ */
+async function checkPage(url, origin) {
+    const html = await getHtmlDom(url)
+    const links = getLinkAll(html)
+    const { links_inside, links_outside } = filteredLinkAll(links, origin)
+    console.log(links_inside, links_outside)
+    //const check_map = await check404(links_outside)
+    //console.log(check_map)
+}
+
+function addPages(links) {
+    links.forEach(link => {
+        if(!links_inside.has(link)) {
+            links_inside.set(link, undefined)
+        }
+    })
+}

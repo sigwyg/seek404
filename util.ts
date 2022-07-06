@@ -42,11 +42,14 @@ export function getLinkAll(dom) {
  * 
  * @param {string[]} urls a[href]の中身
  * @param {string} origin 対象サイトのorigin
- * @return {string[]} サイト内リンク
+ * @return {string[]} サイト内リンク, サイト外リンク
  *
  */
 export function filteredLinkAll(urls, origin) {
-    const filtered_urls = urls.map(url => {
+    const links_inside = []
+    const links_outside = []
+
+    urls.forEach(url => {
         // 相対/絶対リンクならoriginを付加する
         // @example "./about" -> "http://google.com/about"
         const regexp_inside = new RegExp(/^\.?\//)
@@ -56,13 +59,21 @@ export function filteredLinkAll(urls, origin) {
             url = origin + url
         }
 
-        // http...でoriginと一致するなら返却
+        // http...でoriginと一致するならサイト内リンク
         const regexp = new RegExp(origin)
-        if(regexp.test(url)) { return url }
+        if(regexp.test(url)) {
+            links_inside.push(url)
+            return
+        }
 
-        return ""
+        // httpプロトコルに限定
+        // - tel, #, javascriptなどを除外
+        if(/https?:\/\//.test(url)) {
+            links_outside.push(url)
+        }
     })
-    return filtered_urls.filter(Boolean)
+
+    return {links_inside, links_outside}
 }
 
 /**
