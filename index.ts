@@ -19,7 +19,6 @@ const url: string = Deno.args[0]
 const origin: string = url.match(/https?:\/\/[^/]+\//)[0];
 console.table({ url, origin })
 
-
 /*
 {
     "https://example.com/": {
@@ -61,13 +60,43 @@ async function checkSite() {
     })
     if(check_page) {
         console.log(counter++, check_page)
-        await checkPage(check_page, origin)
-        setTimeout(checkSite, 1000)
+
+        // disabled
+        const patterns = [
+            new RegExp(/clients\/prefectures/),
+            new RegExp(/\?prefecture_id=/),
+        ]
+        patterns.forEach(pattern => {
+            if(pattern.test(check_page)){
+                console.error("skip!")
+                checked[check_page] = 500
+                pages.set(check_page, 500)
+                setTimeout(checkSite, 1000)
+                return
+            }
+        })
+
+        // check page
+        checkPage(check_page, origin).then((res) => {
+            setTimeout(checkSite, 1000)
+        }).catch(err => {
+            console.error("failed!")
+            checked[check_page] = 500
+            pages.set(check_page, 500)
+            setTimeout(checkSite, 1000)
+            return
+        })
     } else {
-        console.log(pages, checked)
+        console.log(checked)
     }
 }
+await checkPage(url, origin)
 checkSite()
+//while(Array.from(pages.values()).some(elm => elm === 0)) {
+//}
+
+//await checkPage("https://", origin)
+//console.log(checked)
 
 /*
  * 指定されたURLのリンクをチェックする
@@ -86,13 +115,17 @@ async function checkPage(url, origin) {
     unionMap(outLinks, check_outside)
 
     // サイト内リンクは再帰処理に使うので、少し工夫する
-    // - 200なら上書きしない
-    // - 
-    const check_inside = await check404( links_inside )
-    unionMap(pages, check_inside)
+    //const check_inside = await check404( links_inside )
+    //unionMap(pages, check_inside)
+    links_inside.forEach(link => {
+        if(!pages.has(link)) { pages.set(link, 0) }
+    })
+    if(pages.has(url)) {
+        pages.set(url, 200)
+    }
 
     let checked_links = new Map()
-    unionMap(checked_links, check_inside)
+    //unionMap(checked_links, check_inside)
     unionMap(checked_links, check_outside)
     checked[url] = {
         status: 200,
