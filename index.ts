@@ -1,3 +1,4 @@
+import { setTimeout } from "https://deno.land/std@0.147.0/node/timers.ts";
 import {
     getHtmlDom,
     getLinkAll,
@@ -47,8 +48,23 @@ let pages = new Map<string, number>()
 let outLinks = new Map<string, number>()
 pages.set(url, 0)
 
-// 最初のページをチェック
-checkPage(url, origin)
+/**
+ * 再帰チェック
+ */
+async function checkSite() {
+    let check_page = ''
+    pages.forEach((value, key) => {
+        if(value === 0) check_page = key
+        if(!checked[key]) check_page = key
+    })
+    if(check_page) {
+        await checkPage(url, origin)
+        setTimeout(checkSite, 1000)
+    } else {
+        console.log(pages, checked)
+    }
+}
+checkSite()
 
 /*
  * 指定されたURLのリンクをチェックする
@@ -63,10 +79,14 @@ async function checkPage(url, origin) {
     const { links_inside, links_outside } = filteredLinkAll(links, origin)
 
     // fetchするので、無駄な処理に注意
-    const check_inside = await check404( links_inside )
-    unionMap(pages, check_inside)
     const check_outside = await check404( links_outside )
     unionMap(outLinks, check_outside)
+
+    // サイト内リンクは再帰処理に使うので、少し工夫する
+    // - 200なら上書きしない
+    // - 
+    const check_inside = await check404( links_inside )
+    unionMap(pages, check_inside)
 
     let checked_links = new Map()
     unionMap(checked_links, check_inside)
@@ -75,16 +95,14 @@ async function checkPage(url, origin) {
         status: 200,
         links: checked_links
     }
+    //console.log(checked)
 }
 
-function addPages(links) {
-    links.forEach(link => {
-        if(!links_inside.has(link)) {
-            links_inside.set(link, undefined)
-        }
-    })
-}
-
+/**
+ * Mapを結合する
+ * @param {Map} map マージされるMap
+ * @param {Map} mergedMap マージするMap
+ */
 function unionMap (map, mergedMap) {
     mergedMap.forEach((value, key) => {
         map.set(key, value)
