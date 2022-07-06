@@ -60,8 +60,8 @@ async function checkSite() {
         if(!checked[key]) check_page = key
     })
     if(check_page) {
-        console.log(counter++, url)
-        await checkPage(url, origin)
+        console.log(counter++, check_page)
+        await checkPage(check_page, origin)
         setTimeout(checkSite, 1000)
     } else {
         console.log(pages, checked)
