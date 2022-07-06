@@ -14,11 +14,38 @@ import {
  *
  */
 
-const url = "https://gaiheki-madoguchi.com/"
-const origin = url.match(/https?:\/\/[^/]+\//)[0];
+const url: string = "https://gaiheki-madoguchi.com/"
+const origin: string = url.match(/https?:\/\/[^/]+\//)[0];
 
-let links_inside = new Map()
-links_inside.set(url, undefined)
+
+/*
+{
+    "https://example.com/": {
+        status: 200,
+        links: Map {
+            "https://google.com/" => 200,
+            "https://google.com/about/" => 404,
+            ...
+        }
+    },
+    "https://example.com/contact": {
+    ...
+}
+*/
+interface Checked {
+    [key: string]: {
+        status: number,
+        links?: Map<string, number>
+    }
+}
+const checked: Checked = {
+    [url]: {
+        status: 0,
+    },
+}
+let pages = new Map<string, number>()
+let outLinks = new Map<string, number>()
+pages.set(url, 0)
 
 // 最初のページをチェック
 checkPage(url, origin)
@@ -34,9 +61,20 @@ async function checkPage(url, origin) {
     const html = await getHtmlDom(url)
     const links = getLinkAll(html)
     const { links_inside, links_outside } = filteredLinkAll(links, origin)
-    console.log(links_inside, links_outside)
-    //const check_map = await check404(links_outside)
-    //console.log(check_map)
+
+    // fetchするので、無駄な処理に注意
+    const check_inside = await check404( links_inside )
+    unionMap(pages, check_inside)
+    const check_outside = await check404( links_outside )
+    unionMap(outLinks, check_outside)
+
+    let checked_links = new Map()
+    unionMap(checked_links, check_inside)
+    unionMap(checked_links, check_outside)
+    checked[url] = {
+        status: 200,
+        links: checked_links
+    }
 }
 
 function addPages(links) {
@@ -44,5 +82,25 @@ function addPages(links) {
         if(!links_inside.has(link)) {
             links_inside.set(link, undefined)
         }
+    })
+}
+
+function unionMap (map, mergedMap) {
+    mergedMap.forEach((value, key) => {
+        map.set(key, value)
+    })
+}
+
+/*
+ * @param {string[]} arr チェックしたいURL
+ * @param {map<string, number>} map Map(url, status_code)
+ * @return {string[]} 未チェックのURL一覧
+ */
+function checkMapDuplicate(arr, map) {
+    return arr.filter(link => {
+        if(map.has(link) && map[link] !== 0) {
+            return false
+        }
+        return true
     })
 }
