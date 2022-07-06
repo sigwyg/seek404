@@ -67,12 +67,34 @@ function filteredLinkAll(urls, origin) {
     return filtered_urls.filter(Boolean)
 }
 
+/**
+ * check404()
+ * リンクリストをfetchして、statusをチェックする
+ * 
+ * @param {string[]} urls リンクリスト
+ * @return {Map} リンクリストをkey、status codeをvalueとしてもの
+ *
+ */
+async function check404(urls) {
+    const results = await Promise.all(
+        urls.map(async (url) => {
+            const result = await fetch(url)
+            return [ url, result.status ]
+        })
+    )
+    let checked = new Map()
+    results.forEach(result => {
+        checked.set(result[0], result[1])
+    })
+    return checked
+}
+
 const url = "https://gaiheki-madoguchi.com/"
 const origin_url = url.match(/https?:\/\/[^/]+\//)[0];
 
 const html = await getHtmlDom(url)
 const links = getLinkAll(html)
 
-let links_inside = new Map()
-links_inside = filteredLinkAll(links, origin_url)
-console.log(links_inside)
+const links_inside = filteredLinkAll(links, origin_url)
+const check_map = await check404(links_inside)
+console.log(check_map)
