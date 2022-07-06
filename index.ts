@@ -1,5 +1,14 @@
 import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
 
+
+/**
+ * getHtmlDom()
+ * urlを受け取って、DOMを返す
+ * 
+ * @param {string} url対象サイトのURL
+ * @return {dom} 対象サイトの、DOM解析済みのオブジェクト
+ *
+ */
 async function getHtmlDom(url) {
     const response = await fetch(url).catch((err) => {
         console.error("URL parse failed!")
@@ -12,7 +21,16 @@ async function getHtmlDom(url) {
     return dom
 }
 
-function getLinkAll(dom, origin_url) {
+
+/**
+ * getLinkAll()
+ * WebページのDOMから、a[href]を抜き出して返却
+ * 
+ * @param {DOM} dom 対象サイトの、DOM解析済みのオブジェクト
+ * @return {string[]} サイト内リンクの一覧
+ *
+ */
+function getLinkAll(dom) {
     const urls = []
     dom.querySelectorAll("a").forEach((link) => {
         urls.push(link.getAttribute("href"))
