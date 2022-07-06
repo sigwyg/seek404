@@ -52,13 +52,22 @@ pages.set(url, 0)
  * 再帰チェック
  */
 let counter = 1
+let prev_page = ''
 async function checkSite() {
     let check_page = ''
     pages.forEach((value, key) => {
         if(value === 0) check_page = key
         if(!checked[key]) check_page = key
     })
+
+    // TODO: setTimeout()の重複起動対策
+    if(check_page && prev_page === check_page) {
+        setTimeout(checkSite, 1000)
+        return
+    }
+
     if(check_page) {
+        prev_page = check_page
         console.log(counter++, check_page)
 
         // disabled
@@ -87,7 +96,16 @@ async function checkSite() {
             return
         })
     } else {
-        console.log(checked)
+        //console.log(checked)
+        const display = {}
+        Object.keys(checked).map(key => {
+            if(checked[key].status !== 200) {
+                display[key] = checked[key]
+            } else if(Array.from(checked[key].links?.values()).some(val => val !== 200)) {
+                display[key] = checked[key]
+            }
+        })
+        console.log(display)
     }
 }
 await checkPage(url, origin)
